@@ -58,14 +58,17 @@ class Application {
                 res.end(err.message)
             })
         }
-        return handleRequest
+        return handleRequest//req,res是由服务器自动传递的
     }
 }
 
 function respond(ctx) {
     const body = ctx.body
     const res = ctx.res
-
+    if (body === null) {
+        res.statecode = 204
+        return res.end()//结束响应
+    }
     if (typeof body === 'string') return res.end(body)
     if (Buffer.isBuffer(body)) return res.end(body)//Buffer类型
     if (body instanceof Stream) return body.pipe(ctx.res)//可读流
@@ -74,8 +77,7 @@ function respond(ctx) {
         const jsonStr = JSON.stringify(body)//转成JSON格式再发送
         return res.end(jsonStr)
     }
-    res.statecode = 204
-    res.end()//结束响应
+
 }
 
 module.exports = Application

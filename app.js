@@ -15,7 +15,7 @@ app.use(async (ctx, next) => {
     // const data = await readFile('./package.json')
     // ctx.body = data
 
-    ctx.body = fs.createReadStream('./package.json')
+    // ctx.body = fs.createReadStream('./package.json')
 
 })
 app.use(async (ctx, next) => {
