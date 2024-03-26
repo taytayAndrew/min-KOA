@@ -2,6 +2,8 @@ const http = require('http')
 const context = require('./context')
 const request = require('./request')
 const response = require('./response')
+const Stream = require('stream').Stream;
+
 class Application {
     constructor() {
         this.middleware = [] //保存用户添加中间件函数
@@ -32,7 +34,7 @@ class Application {
     createContext(req, res) {
         const context = Object.create(this.context)
         const request = context.request = Object.create(this.request)
-        const response = context.response = Object.create(this.response)
+        const response = context.response = Object.create(this.response)//Object.create克隆的对象也只能实现一级对象的深拷贝。
         context.app = request.app = response.app = this
         context.req = request.req = response.req = req
         context.res = request.res = response.res = res
@@ -50,7 +52,8 @@ class Application {
         const handleRequest = (req, res) => {
             const context = this.createContext(req, res)
             fnMiddleware(context).then(() => {
-                res.end(context)//
+                // res.end(context)
+                respond(context)
             }).catch(err => {
                 res.end(err.message)
             })
@@ -64,13 +67,15 @@ function respond(ctx) {
     const res = ctx.res
 
     if (typeof body === 'string') return res.end(body)
-    if (Buffer.isBuffer(body)) return res.end(body)
-    if (body instanceof Stream) return body, pipe(ctx.body)
-    if (typeof body === 'number') return res.end(body + '')
+    if (Buffer.isBuffer(body)) return res.end(body)//Buffer类型
+    if (body instanceof Stream) return body.pipe(ctx.res)//可读流
+    if (typeof body === 'number') return res.end(body + '')//数字要转成字符串再发送
     if (typeof body === 'object') {
-        const jsonStr = JSON.stringify(body)
-        res.end(jsonStr)
+        const jsonStr = JSON.stringify(body)//转成JSON格式再发送
+        return res.end(jsonStr)
     }
+    res.statecode = 204
+    res.end()//结束响应
 }
 
 module.exports = Application
